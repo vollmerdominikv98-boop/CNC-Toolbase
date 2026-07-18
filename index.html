@@ -1310,6 +1310,139 @@
 
     window.onload = init;
 </script>
+// (Teil 2 der Script-Logik)
+    
+    if(!nameEl.value || !vcEl.value || !fzEl.value) {
+        alert("Bitte alle Felder ausfüllen!");
+        return;
+    }
+    
+    const newMat = {
+        id: 'cust_' + Date.now(),
+        name: nameEl.value,
+        vc: parseFloat(vcEl.value),
+        fz: parseFloat(fzEl.value),
+        color: '#4a5568',
+        icon: 'fa-cube'
+    };
+    
+    materials.push(newMat);
+    localStorage.setItem('cnc_materials', JSON.stringify(materials));
+    nameEl.value = ''; vcEl.value = ''; fzEl.value = '';
+    renderMaterials();
+    alert("Material erfolgreich hinzugefügt!");
+};
 
+// --- RENDER FUNKTIONEN ---
+
+function renderMaterials() {
+    const grid = document.getElementById('materialsGrid');
+    grid.innerHTML = materials.map(m => `
+        <div class="card ${selection.material?.id === m.id ? 'selected' : ''}" onclick="selectItem('material', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+            <div class="card-header-icon">
+                <i class="fa-solid ${m.icon}"></i>
+                <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+            </div>
+            <div class="card-title">${m.name}</div>
+            <div class="card-description">Vc: ${m.vc} m/min | Fz: ${m.fz} mm</div>
+        </div>
+    `).join('');
+}
+
+function renderCategories() {
+    const grid = document.getElementById('categoriesGrid');
+    grid.innerHTML = categories.map(c => `
+        <div class="card ${selection.category?.id === c.id ? 'selected' : ''}" onclick="selectItem('category', ${JSON.stringify(c).replace(/"/g, '&quot;')})">
+            <i class="fa-solid ${c.icon}"></i>
+            <div class="card-title">${c.name}</div>
+            <div class="card-description">${c.desc}</div>
+        </div>
+    `).join('');
+}
+
+function renderTools() {
+    if(!selection.category) return;
+    const grid = document.getElementById('toolsGrid');
+    const tools = toolsData[selection.category.id] || [];
+    grid.innerHTML = tools.map(t => `
+        <div class="card ${selection.tool?.id === t.id ? 'selected' : ''}" onclick="selectItem('tool', ${JSON.stringify(t).replace(/"/g, '&quot;')})">
+            <div class="card-title">${t.name}</div>
+            <div class="card-description">Ø ${t.d}mm | ${t.z} Zähne</div>
+        </div>
+    `).join('');
+}
+
+function renderMachining() {
+    const grid = document.getElementById('machiningGrid');
+    grid.innerHTML = machiningOptions.map(m => `
+        <div class="card ${selection.machining?.id === m.id ? 'selected' : ''}" onclick="selectItem('machining', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+            <i class="fa-solid ${m.icon}"></i>
+            <div class="card-title">${m.name}</div>
+            <div class="card-description">${m.desc}</div>
+        </div>
+    `).join('');
+}
+
+// --- LOGIK & NAVIGATION ---
+
+function selectItem(type, item) {
+    selection[type] = item;
+    if(type === 'category') selection.tool = null; // Reset bei Kategorie-Wechsel
+    updateUI();
+}
+
+function updateUI() {
+    renderMaterials();
+    renderCategories();
+    renderTools();
+    renderMachining();
+    
+    // "Weiter" Button logik
+    const canProceed = (currentStep === 1 && selection.material) ||
+                       (currentStep === 2 && selection.category) ||
+                       (currentStep === 3 && selection.tool) ||
+                       (currentStep === 4 && selection.machining);
+    
+    btnNext.disabled = !canProceed;
+    
+    if(currentStep === 5) calculateResults();
+}
+
+function calculateResults() {
+    const { material, tool, machining } = selection;
+    
+    // Faktoren-Logik
+    let vcFactor = 1.0;
+    let fzFactor = 1.0;
+    if(machining.preset === 'schlichten') { vcFactor = 1.2; fzFactor = 0.6; }
+    if(machining.preset === 'feinschlichten') { vcFactor = 1.4; fzFactor = 0.4; }
+    
+    const vc = Math.round(material.vc * vcFactor);
+    const n = Math.round((vc * 1000) / (Math.PI * tool.d));
+    const fz = (material.fz * fzFactor).toFixed(3);
+    const vf = Math.round(n * tool.z * fz);
+    
+    document.getElementById('resVc').innerText = vc;
+    document.getElementById('resN').innerText = n;
+    document.getElementById('resFz').innerText = fz;
+    document.getElementById('resVf').innerText = vf;
+    document.getElementById('configSummary').innerText = `${material.name} / ${tool.name}`;
+}
+
+function jumpToStep(step) {
+    currentStep = step;
+    Object.values(stepElements).forEach(el => el.classList.remove('active'));
+    document.getElementById('step' + step).classList.add('active');
+    updateUI();
+}
+
+// Event-Listener
+btnNext.onclick = () => { if(currentStep < 5) jumpToStep(currentStep + 1); };
+btnBack.onclick = () => { if(currentStep > 1) jumpToStep(currentStep - 1); };
+btnRestart.onclick = () => { location.reload(); };
+btnAdminToggle.onclick = () => adminPanel.classList.toggle('active');
+
+init();
+</script>
 </body>
 </html>
