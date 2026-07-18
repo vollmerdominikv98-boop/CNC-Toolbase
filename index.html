@@ -12,7 +12,8 @@
             --bg-color: #0b0f19;
             --card-bg: #131a26;
             --card-hover: #1b2537;
-            --card-selected: #1e2c42;
+            /* Zuvor blau/grau, jetzt ein sattes, dunkles Werkstatt-Grün für ausgewählte Karten */
+            --card-selected: #0f3424; 
             --text-main: #ffffff;
             --text-muted: #8b9bb4;
             --accent-yellow: #f5b82e;
@@ -20,6 +21,8 @@
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --border-color: #223147;
+            /* Grüner Rahmen für die ausgewählte Karte */
+            --border-selected: #10b981; 
             --font-family: 'Inter', sans-serif;
         }
 
@@ -239,10 +242,11 @@
             transform: translateY(-2px);
         }
 
+        /* Aktualisierte Selection-Styles für das grüne Highlight */
         .card.selected {
             background-color: var(--card-selected);
-            border-color: var(--accent-yellow);
-            box-shadow: 0 0 15px rgba(245, 184, 46, 0.1);
+            border-color: var(--border-selected);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
         }
 
         .card-header-icon {
@@ -262,8 +266,15 @@
             color: var(--text-muted);
         }
 
+        /* Icons in ausgewählten Karten passen sich an */
         .card.selected i {
-            color: var(--accent-yellow);
+            color: var(--accent-green);
+        }
+
+        /* Badges in ausgewählten Karten heller lesbar machen */
+        .card.selected .badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
         }
 
         .card-title {
@@ -276,6 +287,11 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.4;
+        }
+
+        /* Textfarbe der Beschreibung anpassen, wenn Karte grün ist */
+        .card.selected .card-description {
+            color: #cbd5e0;
         }
 
         .badge-row {
@@ -294,29 +310,30 @@
             color: var(--text-muted);
         }
 
-        /* LÖSCHBUTTON - JETZT IMMER ROT BEIM HOVER */
+        /* LÖSCHBUTTON ALS KLEINES DEZENTES 'X' */
         .btn-delete-item {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9rem;
             z-index: 10;
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: all 0.2s;
+            font-weight: 600;
         }
 
         .btn-delete-item:hover {
             color: var(--accent-red);
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(239, 68, 68, 0.15);
         }
 
         /* DYNAMIC ADMIN DRAWER PANEL */
@@ -607,7 +624,7 @@
                         <label>Basis-Vorschub Fz (mm)</label>
                         <input type="number" id="matFz" step="0.01" placeholder="Z.B. 0.05">
                     </div>
-                    <button class="btn-submit-admin" onclick="addCustomMaterial()">Material保存</button>
+                    <button class="btn-submit-admin" onclick="addCustomMaterial()">Material speichern</button>
                 </div>
 
                 <!-- Neuen Fräser anlegen -->
@@ -815,11 +832,9 @@
         { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem' }
     ];
 
-    // --- INITIALISIERUNG MIT BACKUP-LOGIK ---
     let materials = JSON.parse(localStorage.getItem('cnc_materials'));
     let toolsData = JSON.parse(localStorage.getItem('cnc_tools'));
 
-    // Falls gar nichts im Speicher ist, Standardwerte laden
     if (!materials) {
         materials = defaultMaterials;
         localStorage.setItem('cnc_materials', JSON.stringify(materials));
@@ -849,7 +864,6 @@
         setupEventListeners();
     }
 
-    // --- HINZUFÜGEN ---
     window.addCustomMaterial = function() {
         const name = document.getElementById('matName').value.trim();
         const vc = parseFloat(document.getElementById('matVc').value);
@@ -897,7 +911,6 @@
         adminPanel.classList.remove('active');
     };
 
-    // --- RADIKALES LÖSCHEN FÜR JEDES ELEMENT ---
     window.deleteMaterial = function(event, id) {
         event.stopPropagation();
         if (!confirm('Dieses Material permanent löschen?')) return;
@@ -927,7 +940,7 @@
         renderTools();
     };
 
-    // --- RENDERING-LOGIK ---
+    // --- RENDERING-LOGIK (Mülltonne durch kleines 'x' ersetzt) ---
     function renderMaterials() {
         const grid = document.getElementById('materialsGrid');
         if (materials.length === 0) {
@@ -940,7 +953,7 @@
                     <span class="card-dot" style="background-color: ${mat.color || '#a0aec0'}"></span>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
-                <button class="btn-delete-item" onclick="deleteMaterial(event, '${mat.id}')"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="btn-delete-item" onclick="deleteMaterial(event, '${mat.id}')">✕</button>
                 <i class="fa-solid ${mat.icon || 'fa-cube'}"></i>
                 <div class="card-title">${mat.name}</div>
             </div>
@@ -986,7 +999,7 @@
                     <i class="fa-solid fa-wrench"></i>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
-                <button class="btn-delete-item" onclick="deleteTool(event, '${selectedCat}', '${tool.id}')"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="btn-delete-item" onclick="deleteTool(event, '${selectedCat}', '${tool.id}')">✕</button>
                 <div>
                     <div class="card-title">${tool.name}</div>
                 </div>
