@@ -1310,139 +1310,137 @@
 
     window.onload = init;
 </script>
-// (Teil 2 der Script-Logik)
-    
-    if(!nameEl.value || !vcEl.value || !fzEl.value) {
-        alert("Bitte alle Felder ausfüllen!");
-        return;
-    }
-    
-    const newMat = {
-        id: 'cust_' + Date.now(),
-        name: nameEl.value,
-        vc: parseFloat(vcEl.value),
-        fz: parseFloat(fzEl.value),
-        color: '#4a5568',
-        icon: 'fa-cube'
+const defaultMaterials = [
+        { id: 'alu', name: 'Aluminium', icon: 'fa-cube', vc: 350, fz: 0.08 },
+        { id: 'stahl', name: 'Stahl', icon: 'fa-trophy', vc: 160, fz: 0.05 },
+        { id: 'stahl55', name: 'Stahl 55HRC', icon: 'fa-shield-halved', vc: 90, fz: 0.06 }
+    ];
+
+    const defaultToolsData = {
+        schaft: [{ id: 's6', name: 'Schaftfräser 6 mm', d: 6, z: 2 }, { id: 's8', name: 'Schaftfräser 8 mm', d: 8, z: 3 }],
+        plan: [{ id: 'p40', name: 'Planfräser 40 mm', d: 40, z: 5 }],
+        bohrer: [{ id: 'b5', name: 'Spiralbohrer 5 mm', d: 5, z: 2 }]
     };
+
+    const categories = [
+        { id: 'schaft', name: 'Schaftfräser', desc: 'Universal', icon: 'fa-wrench' },
+        { id: 'plan', name: 'Planfräser', desc: 'Flächen', icon: 'fa-bullseye' },
+        { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen', icon: 'fa-screwdriver-wrench' }
+    ];
+
+    const defaultMachiningOptions = [
+        { id: 'schruppen', name: 'Schruppen', desc: 'Hoher Abtrag', icon: 'fa-layer-group', preset: 'schruppen' },
+        { id: 'schlichten', name: 'Schlichten', desc: 'Oberfläche', icon: 'fa-sparkles', preset: 'schlichten' }
+    ];
+
+    let materials = JSON.parse(localStorage.getItem('cnc_materials')) || defaultMaterials;
+    let toolsData = JSON.parse(localStorage.getItem('cnc_tools')) || defaultToolsData;
+    let machiningOptions = JSON.parse(localStorage.getItem('cnc_machining')) || defaultMachiningOptions;
+
+    let currentStep = 1;
+    let selection = { material: null, category: null, tool: null, machining: null };
+    const stepElements = { 1: document.getElementById('step1'), 2: document.getElementById('step2'), 3: document.getElementById('step3'), 4: document.getElementById('step4'), 5: document.getElementById('step5') };
+
+    // --- ADMIN FUNKTIONEN ---
+    window.addCustomMaterial = function() {
+        const name = document.getElementById('matName').value;
+        const vc = document.getElementById('matVc').value;
+        const fz = document.getElementById('matFz').value;
+        if(!name || !vc || !fz) return alert("Felder ausfüllen!");
+        materials.push({ id: 'm_' + Date.now(), name, vc: parseFloat(vc), fz: parseFloat(fz), icon: 'fa-cube' });
+        localStorage.setItem('cnc_materials', JSON.stringify(materials));
+        renderMaterials();
+        alert("Material gespeichert!");
+    };
+
+    window.addCustomTool = function() {
+        const cat = document.getElementById('toolCat').value;
+        const name = document.getElementById('toolName').value;
+        const d = document.getElementById('toolD').value;
+        const z = document.getElementById('toolZ').value;
+        if(!name || !d || !z) return alert("Felder ausfüllen!");
+        toolsData[cat].push({ id: 't_' + Date.now(), name, d: parseFloat(d), z: parseInt(z) });
+        localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
+        renderTools();
+        alert("Fräser gespeichert!");
+    };
+
+    window.addCustomMachining = function() {
+        const name = document.getElementById('machName').value;
+        const desc = document.getElementById('machDesc').value;
+        const preset = document.getElementById('machPreset').value;
+        if(!name || !desc) return alert("Felder ausfüllen!");
+        machiningOptions.push({ id: 'mach_' + Date.now(), name, desc, icon: 'fa-gear', preset });
+        localStorage.setItem('cnc_machining', JSON.stringify(machiningOptions));
+        renderMachining();
+        alert("Bearbeitung gespeichert!");
+    };
+
+    // --- RENDER & LOGIK ---
+    function renderMaterials() {
+        document.getElementById('materialsGrid').innerHTML = materials.map(m => `
+            <div class="card ${selection.material?.id === m.id ? 'selected' : ''}" onclick="selectItem('material', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                <div class="card-title">${m.name}</div><div class="card-description">Vc: ${m.vc} | Fz: ${m.fz}</div>
+            </div>`).join('');
+    }
+
+    function renderCategories() {
+        document.getElementById('categoriesGrid').innerHTML = categories.map(c => `
+            <div class="card ${selection.category?.id === c.id ? 'selected' : ''}" onclick="selectItem('category', ${JSON.stringify(c).replace(/"/g, '&quot;')})">
+                <div class="card-title">${c.name}</div>
+            </div>`).join('');
+    }
+
+    function renderTools() {
+        if(!selection.category) return;
+        const tools = toolsData[selection.category.id] || [];
+        document.getElementById('toolsGrid').innerHTML = tools.map(t => `
+            <div class="card ${selection.tool?.id === t.id ? 'selected' : ''}" onclick="selectItem('tool', ${JSON.stringify(t).replace(/"/g, '&quot;')})">
+                <div class="card-title">${t.name}</div>
+            </div>`).join('');
+    }
+
+    function renderMachining() {
+        document.getElementById('machiningGrid').innerHTML = machiningOptions.map(m => `
+            <div class="card ${selection.machining?.id === m.id ? 'selected' : ''}" onclick="selectItem('machining', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                <div class="card-title">${m.name}</div>
+            </div>`).join('');
+    }
+
+    function selectItem(type, item) {
+        selection[type] = item;
+        if(type === 'category') selection.tool = null;
+        updateUI();
+    }
+
+    function updateUI() {
+        renderMaterials(); renderCategories(); renderTools(); renderMachining();
+        const canProceed = (currentStep === 1 && selection.material) || (currentStep === 2 && selection.category) || (currentStep === 3 && selection.tool) || (currentStep === 4 && selection.machining);
+        document.getElementById('btnNext').disabled = !canProceed;
+        if(currentStep === 5) calculateResults();
+    }
+
+    function calculateResults() {
+        const { material, tool, machining } = selection;
+        let vcF = (machining.preset === 'schlichten') ? 1.2 : 1.0;
+        const vc = Math.round(material.vc * vcF);
+        const n = Math.round((vc * 1000) / (Math.PI * tool.d));
+        document.getElementById('resVc').innerText = vc;
+        document.getElementById('resN').innerText = n;
+        document.getElementById('resFz').innerText = material.fz;
+        document.getElementById('resVf').innerText = Math.round(n * tool.z * material.fz);
+    }
+
+    function jumpToStep(step) {
+        currentStep = step;
+        Object.values(stepElements).forEach(el => el.classList.remove('active'));
+        document.getElementById('step' + step).classList.add('active');
+        updateUI();
+    }
+
+    document.getElementById('btnNext').onclick = () => jumpToStep(currentStep + 1);
+    document.getElementById('btnBack').onclick = () => jumpToStep(currentStep - 1);
+    document.getElementById('btnAdminToggle').onclick = () => document.getElementById('adminPanel').classList.toggle('active');
     
-    materials.push(newMat);
-    localStorage.setItem('cnc_materials', JSON.stringify(materials));
-    nameEl.value = ''; vcEl.value = ''; fzEl.value = '';
-    renderMaterials();
-    alert("Material erfolgreich hinzugefügt!");
-};
-
-// --- RENDER FUNKTIONEN ---
-
-function renderMaterials() {
-    const grid = document.getElementById('materialsGrid');
-    grid.innerHTML = materials.map(m => `
-        <div class="card ${selection.material?.id === m.id ? 'selected' : ''}" onclick="selectItem('material', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
-            <div class="card-header-icon">
-                <i class="fa-solid ${m.icon}"></i>
-                <div class="check-badge"><i class="fa-solid fa-check"></i></div>
-            </div>
-            <div class="card-title">${m.name}</div>
-            <div class="card-description">Vc: ${m.vc} m/min | Fz: ${m.fz} mm</div>
-        </div>
-    `).join('');
-}
-
-function renderCategories() {
-    const grid = document.getElementById('categoriesGrid');
-    grid.innerHTML = categories.map(c => `
-        <div class="card ${selection.category?.id === c.id ? 'selected' : ''}" onclick="selectItem('category', ${JSON.stringify(c).replace(/"/g, '&quot;')})">
-            <i class="fa-solid ${c.icon}"></i>
-            <div class="card-title">${c.name}</div>
-            <div class="card-description">${c.desc}</div>
-        </div>
-    `).join('');
-}
-
-function renderTools() {
-    if(!selection.category) return;
-    const grid = document.getElementById('toolsGrid');
-    const tools = toolsData[selection.category.id] || [];
-    grid.innerHTML = tools.map(t => `
-        <div class="card ${selection.tool?.id === t.id ? 'selected' : ''}" onclick="selectItem('tool', ${JSON.stringify(t).replace(/"/g, '&quot;')})">
-            <div class="card-title">${t.name}</div>
-            <div class="card-description">Ø ${t.d}mm | ${t.z} Zähne</div>
-        </div>
-    `).join('');
-}
-
-function renderMachining() {
-    const grid = document.getElementById('machiningGrid');
-    grid.innerHTML = machiningOptions.map(m => `
-        <div class="card ${selection.machining?.id === m.id ? 'selected' : ''}" onclick="selectItem('machining', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
-            <i class="fa-solid ${m.icon}"></i>
-            <div class="card-title">${m.name}</div>
-            <div class="card-description">${m.desc}</div>
-        </div>
-    `).join('');
-}
-
-// --- LOGIK & NAVIGATION ---
-
-function selectItem(type, item) {
-    selection[type] = item;
-    if(type === 'category') selection.tool = null; // Reset bei Kategorie-Wechsel
-    updateUI();
-}
-
-function updateUI() {
-    renderMaterials();
-    renderCategories();
-    renderTools();
-    renderMachining();
-    
-    // "Weiter" Button logik
-    const canProceed = (currentStep === 1 && selection.material) ||
-                       (currentStep === 2 && selection.category) ||
-                       (currentStep === 3 && selection.tool) ||
-                       (currentStep === 4 && selection.machining);
-    
-    btnNext.disabled = !canProceed;
-    
-    if(currentStep === 5) calculateResults();
-}
-
-function calculateResults() {
-    const { material, tool, machining } = selection;
-    
-    // Faktoren-Logik
-    let vcFactor = 1.0;
-    let fzFactor = 1.0;
-    if(machining.preset === 'schlichten') { vcFactor = 1.2; fzFactor = 0.6; }
-    if(machining.preset === 'feinschlichten') { vcFactor = 1.4; fzFactor = 0.4; }
-    
-    const vc = Math.round(material.vc * vcFactor);
-    const n = Math.round((vc * 1000) / (Math.PI * tool.d));
-    const fz = (material.fz * fzFactor).toFixed(3);
-    const vf = Math.round(n * tool.z * fz);
-    
-    document.getElementById('resVc').innerText = vc;
-    document.getElementById('resN').innerText = n;
-    document.getElementById('resFz').innerText = fz;
-    document.getElementById('resVf').innerText = vf;
-    document.getElementById('configSummary').innerText = `${material.name} / ${tool.name}`;
-}
-
-function jumpToStep(step) {
-    currentStep = step;
-    Object.values(stepElements).forEach(el => el.classList.remove('active'));
-    document.getElementById('step' + step).classList.add('active');
-    updateUI();
-}
-
-// Event-Listener
-btnNext.onclick = () => { if(currentStep < 5) jumpToStep(currentStep + 1); };
-btnBack.onclick = () => { if(currentStep > 1) jumpToStep(currentStep - 1); };
-btnRestart.onclick = () => { location.reload(); };
-btnAdminToggle.onclick = () => adminPanel.classList.toggle('active');
-
-init();
-</script>
-</body>
-</html>
+    // Init
+    renderMaterials(); renderCategories(); renderMachining();
