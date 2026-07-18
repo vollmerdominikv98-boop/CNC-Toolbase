@@ -240,7 +240,6 @@
             transform: translateY(-2px);
         }
 
-        /* HIER PASSIERT DIE GRÜNE MAGIE BEI AUSWAHL */
         .card.selected {
             background-color: var(--card-selected);
             border-color: var(--border-selected);
@@ -823,7 +822,7 @@
 
     const machiningOptions = [
         { id: 'schruppen', name: 'Schruppen', desc: 'Großvolumiger Abtrag, hohe Zustellung', icon: 'fa-layer-group' },
-        { id: 'schlichten', name: 'Schlichten', desc: 'Oberflächenqualität, feiner Vorschub', icon: 'fa-sparkles' },
+        { id: 'schlichten', name: 'Schlichten', desc: 'Oberflächenqualität, feiner Vorschub', icon: 'fa-bolt' },
         { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem' }
     ];
 
@@ -842,7 +841,13 @@
     let currentStep = 1;
     let selection = { material: null, category: null, tool: null, machining: null };
 
-    const stepElements = { 1: document.getElementById('step1'), 2: document.getElementById('step2'), 3: document.getElementById('step3'), 4: document.getElementById('step4'), 5: document.getElementById('step5') };
+    const stepElements = { 
+        1: document.getElementById('step1'), 
+        2: document.getElementById('step2'), 
+        3: document.getElementById('step3'), 
+        4: document.getElementById('step4'), 
+        5: document.getElementById('step5') 
+    };
     const btnBack = document.getElementById('btnBack');
     const btnNext = document.getElementById('btnNext');
     const btnRestart = document.getElementById('btnRestart');
@@ -935,7 +940,6 @@
         renderTools();
     };
 
-    // --- RENDERING-LOGIK (Garantiert ohne Mülltonnen-Klassen) ---
     function renderMaterials() {
         const grid = document.getElementById('materialsGrid');
         if (materials.length === 0) {
@@ -943,14 +947,19 @@
             return;
         }
         grid.innerHTML = materials.map(mat => `
-            <div class="card ${selection.material === mat.id ? 'selected' : ''}" data-id="${mat.id}" onclick="selectItem('material', '${mat.id}')">
+            <div class="card ${selection.material === mat.id ? 'selected' : ''}" onclick="selectItem('material', '${mat.id}')">
                 <div class="card-header-icon">
                     <span class="card-dot" style="background-color: ${mat.color || '#a0aec0'}"></span>
-                    <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+                    <i class="fa-solid ${mat.icon || 'fa-cube'}"></i>
                 </div>
-                <button class="btn-delete-item" onclick="deleteMaterial(event, '${mat.id}')">✕</button>
-                <i class="fa-solid ${mat.icon || 'fa-cube'}"></i>
                 <div class="card-title">${mat.name}</div>
+                <div class="card-description">Standard-Schnittwerte für die Bearbeitung auf CNC-Systemen.</div>
+                <div class="badge-row">
+                    <span class="badge">Vc: ${mat.vc} m/min</span>
+                    <span class="badge">Fz: ${mat.fz} mm</span>
+                </div>
+                <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+                ${mat.id.startsWith('custom_') ? `<button class="btn-delete-item" onclick="deleteMaterial(event, '${mat.id}')"><i class="fa-solid fa-xmark"></i></button>` : ''}
             </div>
         `).join('');
     }
@@ -960,18 +969,17 @@
         grid.innerHTML = categories.map(cat => {
             const count = toolsData[cat.id] ? toolsData[cat.id].length : 0;
             return `
-                <div class="card ${selection.category === cat.id ? 'selected' : ''}" data-id="${cat.id}" onclick="selectItem('category', '${cat.id}')">
+                <div class="card ${selection.category === cat.id ? 'selected' : ''}" onclick="selectItem('category', '${cat.id}')">
                     <div class="card-header-icon">
+                        <span></span>
                         <i class="fa-solid ${cat.icon}"></i>
-                        <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                     </div>
-                    <div>
-                        <div class="card-title">${cat.name}</div>
-                        <div class="card-description">${cat.desc}</div>
-                    </div>
+                    <div class="card-title">${cat.name}</div>
+                    <div class="card-description">${cat.desc}</div>
                     <div class="badge-row">
-                        <span class="badge">${count} hinterlegt</span>
+                        <span class="badge">${count} Werkzeuge</span>
                     </div>
+                    <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
             `;
         }).join('');
@@ -979,30 +987,25 @@
 
     function renderTools() {
         const grid = document.getElementById('toolsGrid');
-        const selectedCat = selection.category;
-        if (!selectedCat) return;
-        const tools = toolsData[selectedCat] || [];
-        
-        if (tools.length === 0) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">In dieser Kategorie sind keine Werkzeuge definiert.</div>`;
+        const cat = selection.category;
+        if (!cat || !toolsData[cat] || toolsData[cat].length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">Keine Werkzeuge in dieser Kategorie vorhanden.</div>`;
             return;
         }
-
-        grid.innerHTML = tools.map(tool => `
-            <div class="card ${selection.tool === tool.id ? 'selected' : ''}" data-id="${tool.id}" onclick="selectItem('tool', '${tool.id}')">
+        grid.innerHTML = toolsData[cat].map(tool => `
+            <div class="card ${selection.tool === tool.id ? 'selected' : ''}" onclick="selectItem('tool', '${tool.id}')">
                 <div class="card-header-icon">
-                    <i class="fa-solid fa-wrench"></i>
-                    <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+                    <span></span>
+                    <i class="fa-solid fa-circle-dot"></i>
                 </div>
-                <button class="btn-delete-item" onclick="deleteTool(event, '${selectedCat}', '${tool.id}')">✕</button>
-                <div>
-                    <div class="card-title">${tool.name}</div>
-                </div>
+                <div class="card-title">${tool.name}</div>
+                <div class="card-description">Präzisionswerkzeug für produktiven Einsatz.</div>
                 <div class="badge-row">
-                    <span class="badge">${tool.d} mm Ø</span>
+                    <span class="badge">Ø ${tool.d} mm</span>
                     <span class="badge">${tool.z} Zähne</span>
-                    <span class="badge">${tool.label}</span>
                 </div>
+                <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+                ${tool.id.startsWith('custom_') ? `<button class="btn-delete-item" onclick="deleteTool(event, '${cat}', '${tool.id}')"><i class="fa-solid fa-xmark"></i></button>` : ''}
             </div>
         `).join('');
     }
@@ -1010,149 +1013,153 @@
     function renderMachining() {
         const grid = document.getElementById('machiningGrid');
         grid.innerHTML = machiningOptions.map(opt => `
-            <div class="card ${selection.machining === opt.id ? 'selected' : ''}" data-id="${opt.id}" onclick="selectItem('machining', '${opt.id}')">
+            <div class="card ${selection.machining === opt.id ? 'selected' : ''}" onclick="selectItem('machining', '${opt.id}')">
                 <div class="card-header-icon">
+                    <span></span>
                     <i class="fa-solid ${opt.icon}"></i>
-                    <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
-                <div>
-                    <div class="card-title">${opt.name}</div>
-                    <div class="card-description">${opt.desc}</div>
-                </div>
+                <div class="card-title">${opt.name}</div>
+                <div class="card-description">${opt.desc}</div>
+                <div class="check-badge"><i class="fa-solid fa-check"></i></div>
             </div>
         `).join('');
     }
 
-    // --- NAVI & LOGIK ---
     window.selectItem = function(type, id) {
         selection[type] = id;
-        const activeStepEl = stepElements[currentStep];
-        activeStepEl.querySelectorAll('.card').forEach(card => {
-            if (card.dataset.id === id) card.classList.add('selected');
-            else card.classList.remove('selected');
-        });
-
+        
+        if (type === 'material') renderMaterials();
         if (type === 'category') {
-            selection.tool = null;
+            renderCategories();
+            selection.tool = null; 
             renderTools();
         }
+        if (type === 'tool') renderTools();
+        if (type === 'machining') renderMachining();
+
         btnNext.disabled = false;
     };
 
-    function setupEventListeners() {
-        btnNext.addEventListener('click', () => { if (currentStep < 5) { currentStep++; updateWizard(); } });
-        btnBack.addEventListener('click', () => { if (currentStep > 1) { currentStep--; updateWizard(); } });
-        btnRestart.addEventListener('click', () => { resetWizard(); });
-        btnAdminToggle.addEventListener('click', () => { adminPanel.classList.toggle('active'); });
-    }
-
     function updateWizard() {
         Object.keys(stepElements).forEach(step => {
-            if (parseInt(step) === currentStep) stepElements[step].classList.add('active');
-            else stepElements[step].classList.remove('active');
+            stepElements[step].classList.remove('active');
+            const stepItem = document.querySelector(`.step-item[data-step="${step}"]`);
+            if (stepItem) {
+                stepItem.classList.remove('active', 'completed');
+                if (step < currentStep) stepItem.classList.add('completed');
+                if (step == currentStep) stepItem.classList.add('active');
+            }
         });
 
-        document.querySelectorAll('.step-item').forEach(item => {
-            const s = parseInt(item.dataset.step);
-            item.classList.remove('active', 'completed');
-            if (s === currentStep) item.classList.add('active');
-            else if (s < currentStep) item.classList.add('completed');
-        });
-
-        progressLineFill.style.width = `${((currentStep - 1) / 4) * 100}%`;
-        btnBack.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+        stepElements[currentStep].classList.add('active');
+        progressLineFill.style.width = ((currentStep - 1) / 4) * 100 + '%';
 
         if (currentStep === 5) {
             navFooter.style.display = 'none';
-            calculateSchnittwerte();
+            calculateResults();
         } else {
             navFooter.style.display = 'flex';
-            let stepKey = getStepKey(currentStep);
-            if (selection[stepKey]) {
-                btnNext.disabled = false;
-            } else {
-                btnNext.disabled = true;
-            }
+            btnBack.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            
+            // Prüfen, ob für den aktuellen Schritt bereits eine Auswahl existiert
+            let hasSelection = false;
+            if (currentStep === 1 && selection.material) hasSelection = true;
+            if (currentStep === 2 && selection.category) hasSelection = true;
+            if (currentStep === 3 && selection.tool) hasSelection = true;
+            if (currentStep === 4 && selection.machining) hasSelection = true;
+            
+            btnNext.disabled = !hasSelection;
         }
-        btnNext.innerHTML = currentStep === 4 ? 'Ergebnis anzeigen <i class="fa-solid fa-chevron-right"></i>' : 'Weiter <i class="fa-solid fa-arrow-right"></i>';
     }
 
-    function getStepKey(step) {
-        return ['','material','category','tool','machining'][step] || '';
-    }
+    function calculateResults() {
+        const mat = materials.find(m => m.id === selection.material);
+        const cat = selection.category;
+        const tool = toolsData[cat].find(t => t.id === selection.tool);
+        const mach = selection.machining;
 
-    function resetWizard() {
-        currentStep = 1;
-        selection = { material: null, category: null, tool: null, machining: null };
-        renderMaterials();
-        renderCategories();
-        updateWizard();
-    }
+        if (!mat || !tool) return;
 
-    function calculateSchnittwerte() {
-        const selMaterial = materials.find(m => m.id === selection.material);
-        const toolsGroup = toolsData[selection.category] || [];
-        const selTool = toolsGroup.find(t => t.id === selection.tool);
-        const selMachining = machiningOptions.find(o => o.id === selection.machining);
+        // Faktoren basierend auf der Bearbeitungsart bestimmen
+        let vcMod = 1.0;
+        let fzMod = 1.0;
+        let apMod = 1.0;
+        let aeMod = 1.0;
 
-        if (!selMaterial || !selTool || !selMachining) return;
+        if (mach === 'schruppen') {
+            vcMod = 0.9; fzMod = 1.2; apMod = 1.5; aeMod = 0.6;
+        } else if (mach === 'schlichten') {
+            vcMod = 1.1; fzMod = 0.8; apMod = 1.0; aeMod = 0.2;
+        } else if (mach === 'feinschlichten') {
+            vcMod = 1.2; fzMod = 0.5; apMod = 0.5; aeMod = 0.05;
+        }
 
-        document.getElementById('configSummary').innerText = `${selMaterial.name}  ›  ${selTool.name}  ›  ${selMachining.name}`;
+        // Sonderfall Bohren (Keine radiale Zustellung ae)
+        if (cat === 'bohrer') {
+            aeMod = 0;
+            apMod = 2.0; // Bohrtiefe-Richtwert
+        }
 
-        let vc = selMaterial.vc; 
-        let fz = selMaterial.fz; 
-
-        let apFactor = 1.5;
-        let aeFactor = 0.7;
+        // Berechnung der Kernwerte
+        const vc = Math.round(mat.vc * vcMod);
+        const fz = parseFloat((mat.fz * fzMod).toFixed(3));
         
-        if (selection.machining === 'schruppen') {
-            apFactor = 0.225; 
-            aeFactor = 0.7;   
-        } else if (selection.machining === 'schlichten') {
-            vc = vc * 1.2;
-            fz = fz * 0.6;
-            apFactor = 1.0; 
-            aeFactor = 0.1;
-        } else if (selection.machining === 'feinschlichten') {
-            vc = vc * 1.4;
-            fz = fz * 0.4;
-            apFactor = 0.5;
-            aeFactor = 0.05;
-        }
+        // n = (vc * 1000) / (π * d)
+        let n = Math.round((vc * 1000) / (Math.PI * tool.d));
+        if (n > 24000) n = 24000; // Schutzdeckel für High-Speed Spindeln
 
-        const d = selTool.d;
-        const z = selTool.z;
+        // vf = n * z * fz
+        const vf = Math.round(n * tool.z * fz);
+        
+        const ap = parseFloat((tool.d * apMod).toFixed(1));
+        const ae = parseFloat((tool.d * aeMod).toFixed(1));
 
-        if (selection.material === 'stahl55' && selection.tool === 's8' && selection.machining === 'schruppen') {
-            vc = 90; fz = 0.06;
-            let n = 3581; let vf = 645; let ap = 1.8; let ae = 5.6;
-            renderOutputs(vc, n, vf, fz, ap, ae, Math.round(ap * ae * vf), z, d);
-            return;
-        }
+        // Zeitspanvolumen Q = ap * ae * vf (in cm³/min oder mm³/min, hier mm³/min)
+        const q = Math.round(ap * ae * vf);
 
-        let n = Math.round((vc * 1000) / (Math.PI * d));
-        let vf = Math.round(n * z * fz);
-        let ap = parseFloat((d * apFactor).toFixed(1));
-        let ae = parseFloat((d * aeFactor).toFixed(1));
-        let q = Math.round(ap * ae * vf);
+        // UI Updates
+        document.getElementById('configSummary').textContent = `${mat.name} • ${tool.name} (${machiningOptions.find(o=>o.id===mach).name})`;
+        document.getElementById('resVc').textContent = vc;
+        document.getElementById('resN').textContent = n;
+        document.getElementById('resVf').textContent = vf;
+        document.getElementById('resFz').textContent = fz.toFixed(2);
+        document.getElementById('resAp').textContent = ap;
+        document.getElementById('resAe').textContent = cat === 'bohrer' ? '—' : ae;
 
-        renderOutputs(Math.round(vc), n, vf, fz, ap, ae, q, z, d);
+        document.getElementById('tagZ').textContent = `Zähne z = ${tool.z}`;
+        document.getElementById('tagQ').textContent = cat === 'bohrer' ? 'Bohrzyklus aktiv' : `Abtragsrate ≈ ${q.toLocaleString('de-DE')} mm³/min`;
+        document.getElementById('tagD').textContent = `Werkzeug Ø ${tool.d} mm`;
     }
 
-    function renderOutputs(vc, n, vf, fz, ap, ae, q, z, d) {
-        document.getElementById('resVc').innerText = vc;
-        document.getElementById('resN').innerText = n;
-        document.getElementById('resVf').innerText = vf;
-        document.getElementById('resFz').innerText = fz.toFixed(2);
-        document.getElementById('resAp').innerText = ap;
-        document.getElementById('resAe').innerText = ae;
-        document.getElementById('tagZ').innerText = `Zähne z = ${z}`;
-        document.getElementById('tagQ').innerText = `Abtragsrate ≈ ${q} mm³/min`;
-        document.getElementById('tagD').innerText = `Werkzeug Ø ${d} mm`;
+    function setupEventListeners() {
+        btnNext.addEventListener('click', () => {
+            if (currentStep < 5) {
+                currentStep++;
+                updateWizard();
+            }
+        });
+
+        btnBack.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateWizard();
+            }
+        });
+
+        btnRestart.addEventListener('click', () => {
+            currentStep = 1;
+            selection = { material: null, category: null, tool: null, machining: null };
+            renderMaterials();
+            renderCategories();
+            updateWizard();
+        });
+
+        btnAdminToggle.addEventListener('click', () => {
+            adminPanel.classList.toggle('active');
+        });
     }
 
-    window.onload = init;
+    document.addEventListener('DOMContentLoaded', init);
 </script>
-
 </body>
 </html>
