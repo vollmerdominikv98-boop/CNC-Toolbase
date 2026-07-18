@@ -18,6 +18,7 @@
             --accent-yellow: #f5b82e;
             --accent-yellow-hover: #e5a91c;
             --accent-green: #10b981;
+            --accent-red: #ef4444;
             --border-color: #223147;
             --font-family: 'Inter', sans-serif;
         }
@@ -268,6 +269,7 @@
         .card-title {
             font-size: 1.15rem;
             font-weight: 600;
+            padding-right: 25px;
         }
 
         .card-description {
@@ -290,6 +292,31 @@
             padding: 4px 10px;
             font-size: 0.75rem;
             color: var(--text-muted);
+        }
+
+        /* LÖSCHBUTTON - JETZT IMMER ROT BEIM HOVER */
+        .btn-delete-item {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            z-index: 10;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-delete-item:hover {
+            color: var(--accent-red);
+            background-color: rgba(239, 68, 68, 0.1);
         }
 
         /* DYNAMIC ADMIN DRAWER PANEL */
@@ -563,7 +590,6 @@
             <button class="btn-admin-toggle" id="btnAdminToggle"><i class="fa-solid fa-plus"></i> Element hinzufügen</button>
         </div>
 
-        <!-- HIER IST DAS NEUE LIVE-KONTROLLPANEL -->
         <div class="admin-panel" id="adminPanel">
             <div class="admin-grid">
                 <!-- Neues Material anlegen -->
@@ -581,7 +607,7 @@
                         <label>Basis-Vorschub Fz (mm)</label>
                         <input type="number" id="matFz" step="0.01" placeholder="Z.B. 0.05">
                     </div>
-                    <button class="btn-submit-admin" onclick="addCustomMaterial()">Material speichern</button>
+                    <button class="btn-submit-admin" onclick="addCustomMaterial()">Material保存</button>
                 </div>
 
                 <!-- Neuen Fräser anlegen -->
@@ -744,7 +770,6 @@
 </div>
 
 <script>
-    // --- STANDARDDATEN ---
     const defaultMaterials = [
         { id: 'alu', name: 'Aluminium', color: '#00d2ff', icon: 'fa-cube', vc: 350, fz: 0.08 },
         { id: 'stahl', name: 'Stahl', color: '#a0aec0', icon: 'fa-trophy', vc: 160, fz: 0.05 },
@@ -779,9 +804,9 @@
     };
 
     const categories = [
-        { id: 'schaft', name: 'Schaftfräser', desc: 'Universalfräser für Konturen und Nuten', icon: 'fa-wrench', count: 'Varianten' },
-        { id: 'plan', name: 'Planfräser', desc: 'Große Flächen planfräsen', icon: 'fa-bullseye', count: 'Varianten' },
-        { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen und Senkungen', icon: 'fa-screwdriver-wrench', count: 'Varianten' }
+        { id: 'schaft', name: 'Schaftfräser', desc: 'Universalfräser für Konturen und Nuten', icon: 'fa-wrench' },
+        { id: 'plan', name: 'Planfräser', desc: 'Große Flächen planfräsen', icon: 'fa-bullseye' },
+        { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen und Senkungen', icon: 'fa-screwdriver-wrench' }
     ];
 
     const machiningOptions = [
@@ -790,9 +815,19 @@
         { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem' }
     ];
 
-    // --- STRUKTUR FÜR LOCALSTORAGE (PERSISTENZ) ---
-    let materials = JSON.parse(localStorage.getItem('cnc_materials')) || defaultMaterials;
-    let toolsData = JSON.parse(localStorage.getItem('cnc_tools')) || defaultToolsData;
+    // --- INITIALISIERUNG MIT BACKUP-LOGIK ---
+    let materials = JSON.parse(localStorage.getItem('cnc_materials'));
+    let toolsData = JSON.parse(localStorage.getItem('cnc_tools'));
+
+    // Falls gar nichts im Speicher ist, Standardwerte laden
+    if (!materials) {
+        materials = defaultMaterials;
+        localStorage.setItem('cnc_materials', JSON.stringify(materials));
+    }
+    if (!toolsData) {
+        toolsData = defaultToolsData;
+        localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
+    }
 
     let currentStep = 1;
     let selection = { material: null, category: null, tool: null, machining: null };
@@ -814,7 +849,7 @@
         setupEventListeners();
     }
 
-    // --- ADDMETHODEN FÜR ADMIN-OPERATIVE ---
+    // --- HINZUFÜGEN ---
     window.addCustomMaterial = function() {
         const name = document.getElementById('matName').value.trim();
         const vc = parseFloat(document.getElementById('matVc').value);
@@ -834,7 +869,6 @@
         document.getElementById('matVc').value = '';
         document.getElementById('matFz').value = '';
         adminPanel.classList.remove('active');
-        alert(`Material "${name}" erfolgreich hinzugefügt!`);
     };
 
     window.addCustomTool = function() {
@@ -854,27 +888,60 @@
         toolsData[cat].push({ id, name, d, z, label });
         localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
 
-        if (selection.category === cat) {
-            renderTools();
-        }
+        renderCategories(); 
+        if (selection.category === cat) renderTools();
         
         document.getElementById('toolName').value = '';
         document.getElementById('toolD').value = '';
         document.getElementById('toolZ').value = '';
         adminPanel.classList.remove('active');
-        alert(`Werkzeug "${name}" wurde hinterlegt!`);
     };
 
-    // --- RENDERING-FUNKTIONEN ---
+    // --- RADIKALES LÖSCHEN FÜR JEDES ELEMENT ---
+    window.deleteMaterial = function(event, id) {
+        event.stopPropagation();
+        if (!confirm('Dieses Material permanent löschen?')) return;
+        
+        materials = materials.filter(m => m.id !== id);
+        localStorage.setItem('cnc_materials', JSON.stringify(materials));
+        
+        if (selection.material === id) {
+            selection.material = null;
+            btnNext.disabled = true;
+        }
+        renderMaterials();
+    };
+
+    window.deleteTool = function(event, cat, id) {
+        event.stopPropagation();
+        if (!confirm('Diesen Fräser permanent löschen?')) return;
+
+        toolsData[cat] = toolsData[cat].filter(t => t.id !== id);
+        localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
+
+        if (selection.tool === id) {
+            selection.tool = null;
+            btnNext.disabled = true;
+        }
+        renderCategories();
+        renderTools();
+    };
+
+    // --- RENDERING-LOGIK ---
     function renderMaterials() {
         const grid = document.getElementById('materialsGrid');
+        if (materials.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">Keine Materialien vorhanden. Nutze den Button oben, um welche anzulegen.</div>`;
+            return;
+        }
         grid.innerHTML = materials.map(mat => `
-            <div class="card" data-id="${mat.id}" onclick="selectItem('material', '${mat.id}')">
+            <div class="card ${selection.material === mat.id ? 'selected' : ''}" data-id="${mat.id}" onclick="selectItem('material', '${mat.id}')">
                 <div class="card-header-icon">
-                    <span class="card-dot" style="background-color: ${mat.color}"></span>
+                    <span class="card-dot" style="background-color: ${mat.color || '#a0aec0'}"></span>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
-                <i class="fa-solid ${mat.icon}"></i>
+                <button class="btn-delete-item" onclick="deleteMaterial(event, '${mat.id}')"><i class="fa-solid fa-trash-can"></i></button>
+                <i class="fa-solid ${mat.icon || 'fa-cube'}"></i>
                 <div class="card-title">${mat.name}</div>
             </div>
         `).join('');
@@ -885,7 +952,7 @@
         grid.innerHTML = categories.map(cat => {
             const count = toolsData[cat.id] ? toolsData[cat.id].length : 0;
             return `
-                <div class="card" data-id="${cat.id}" onclick="selectItem('category', '${cat.id}')">
+                <div class="card ${selection.category === cat.id ? 'selected' : ''}" data-id="${cat.id}" onclick="selectItem('category', '${cat.id}')">
                     <div class="card-header-icon">
                         <i class="fa-solid ${cat.icon}"></i>
                         <div class="check-badge"><i class="fa-solid fa-check"></i></div>
@@ -895,7 +962,7 @@
                         <div class="card-description">${cat.desc}</div>
                     </div>
                     <div class="badge-row">
-                        <span class="badge">${count} Varianten</span>
+                        <span class="badge">${count} hinterlegt</span>
                     </div>
                 </div>
             `;
@@ -905,14 +972,21 @@
     function renderTools() {
         const grid = document.getElementById('toolsGrid');
         const selectedCat = selection.category;
+        if (!selectedCat) return;
         const tools = toolsData[selectedCat] || [];
         
+        if (tools.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px;">In dieser Kategorie sind keine Werkzeuge definiert.</div>`;
+            return;
+        }
+
         grid.innerHTML = tools.map(tool => `
-            <div class="card" data-id="${tool.id}" onclick="selectItem('tool', '${tool.id}')">
+            <div class="card ${selection.tool === tool.id ? 'selected' : ''}" data-id="${tool.id}" onclick="selectItem('tool', '${tool.id}')">
                 <div class="card-header-icon">
                     <i class="fa-solid fa-wrench"></i>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
+                <button class="btn-delete-item" onclick="deleteTool(event, '${selectedCat}', '${tool.id}')"><i class="fa-solid fa-trash-can"></i></button>
                 <div>
                     <div class="card-title">${tool.name}</div>
                 </div>
@@ -928,7 +1002,7 @@
     function renderMachining() {
         const grid = document.getElementById('machiningGrid');
         grid.innerHTML = machiningOptions.map(opt => `
-            <div class="card" data-id="${opt.id}" onclick="selectItem('machining', '${opt.id}')">
+            <div class="card ${selection.machining === opt.id ? 'selected' : ''}" data-id="${opt.id}" onclick="selectItem('machining', '${opt.id}')">
                 <div class="card-header-icon">
                     <i class="fa-solid ${opt.icon}"></i>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
@@ -941,7 +1015,7 @@
         `).join('');
     }
 
-    // --- INTERAKTION & SELEKTION ---
+    // --- NAVI & LOGIK ---
     window.selectItem = function(type, id) {
         selection[type] = id;
         const activeStepEl = stepElements[currentStep];
@@ -988,10 +1062,6 @@
             let stepKey = getStepKey(currentStep);
             if (selection[stepKey]) {
                 btnNext.disabled = false;
-                stepElements[currentStep].querySelectorAll('.card').forEach(card => {
-                    if (card.dataset.id === selection[stepKey]) card.classList.add('selected');
-                    else card.classList.remove('selected');
-                });
             } else {
                 btnNext.disabled = true;
             }
@@ -1006,13 +1076,11 @@
     function resetWizard() {
         currentStep = 1;
         selection = { material: null, category: null, tool: null, machining: null };
-        document.querySelectorAll('.card').forEach(card => card.classList.remove('selected'));
-        document.getElementById('toolsGrid').innerHTML = '';
-        renderCategories(); // Aktualisiert die Varianten-Zähler
+        renderMaterials();
+        renderCategories();
         updateWizard();
     }
 
-    // --- DYNAMISCHE RECHENLOGIK ---
     function calculateSchnittwerte() {
         const selMaterial = materials.find(m => m.id === selection.material);
         const toolsGroup = toolsData[selection.category] || [];
@@ -1023,7 +1091,6 @@
 
         document.getElementById('configSummary').innerText = `${selMaterial.name}  ›  ${selTool.name}  ›  ${selMachining.name}`;
 
-        // Werte direkt aus dem ausgewählten Objekt (egal ob vordefiniert oder neu erstellt!)
         let vc = selMaterial.vc; 
         let fz = selMaterial.fz; 
 
@@ -1048,7 +1115,6 @@
         const d = selTool.d;
         const z = selTool.z;
 
-        // Hardcoded Sonderregel für den originalen Testfall behalten
         if (selection.material === 'stahl55' && selection.tool === 's8' && selection.machining === 'schruppen') {
             vc = 90; fz = 0.06;
             let n = 3581; let vf = 645; let ap = 1.8; let ae = 5.6;
