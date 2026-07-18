@@ -167,7 +167,6 @@
             font-size: 0.9rem;
         }
         
-        /* Macht bereits besuchte Schritte anklickbar */
         .step-item.completed .step-circle,
         .step-item.active .step-circle {
             cursor: pointer;
@@ -352,12 +351,8 @@
 
         .admin-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .admin-grid { grid-template-columns: 1fr; }
         }
 
         .admin-section h3 {
@@ -621,7 +616,7 @@
             .grid-layout, .results-grid { grid-template-columns: 1fr; }
         }
 
-        /* PRINT STYLES FÜR DEN EXPORT */
+        /* PRINT STYLES */
         @media print {
             body { background: white; color: black; padding: 0; }
             .admin-panel, #btnAdminToggle, .progress-steps, #navFooter, .action-buttons-container, .btn-delete-item { display: none !important; }
@@ -692,6 +687,28 @@
                         <input type="number" id="toolZ" placeholder="Z.B. 2">
                     </div>
                     <button class="btn-submit-admin" onclick="addCustomTool()">Fräser speichern</button>
+                </div>
+
+                <!-- Neue Bearbeitung hinzufügen -->
+                <div class="admin-section">
+                    <h3>Neue Bearbeitung hinzufügen</h3>
+                    <div class="form-group">
+                        <label>Name der Bearbeitung</label>
+                        <input type="text" id="machName" placeholder="Z.B. Abzeilen, Nutfräsen">
+                    </div>
+                    <div class="form-group">
+                        <label>Beschreibung</label>
+                        <input type="text" id="machDesc" placeholder="Z.B. 3D-Oberflächenzeilen">
+                    </div>
+                    <div class="form-group">
+                        <label>Faktoren-Profil (Preset)</label>
+                        <select id="machPreset">
+                            <option value="schlichten">Wie Schlichten (Vc +20%, Fz -40%)</option>
+                            <option value="feinschlichten">Wie Feinschlichten (Vc +40%, Fz -60%)</option>
+                            <option value="schruppen">Wie Schruppen (Basiswerte, hohes Ap/Ae)</option>
+                        </select>
+                    </div>
+                    <button class="btn-submit-admin" onclick="addCustomMachining()">Bearbeitung speichern</button>
                 </div>
             </div>
         </div>
@@ -870,14 +887,15 @@
         { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen und Senkungen', icon: 'fa-screwdriver-wrench' }
     ];
 
-    const machiningOptions = [
-        { id: 'schruppen', name: 'Schruppen', desc: 'Großvolumiger Abtrag, hohe Zustellung', icon: 'fa-layer-group' },
-        { id: 'schlichten', name: 'Schlichten', desc: 'Oberflächenqualität, feiner Vorschub', icon: 'fa-sparkles' },
-        { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem' }
+    const defaultMachiningOptions = [
+        { id: 'schruppen', name: 'Schruppen', desc: 'Großvolumiger Abtrag, hohe Zustellung', icon: 'fa-layer-group', preset: 'schruppen' },
+        { id: 'schlichten', name: 'Schlichten', desc: 'Oberflächenqualität, feiner Vorschub', icon: 'fa-sparkles', preset: 'schlichten' },
+        { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem', preset: 'feinschlichten' }
     ];
 
     let materials = JSON.parse(localStorage.getItem('cnc_materials'));
     let toolsData = JSON.parse(localStorage.getItem('cnc_tools'));
+    let machiningOptions = JSON.parse(localStorage.getItem('cnc_machining'));
 
     if (!materials) {
         materials = defaultMaterials;
@@ -886,6 +904,10 @@
     if (!toolsData) {
         toolsData = defaultToolsData;
         localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
+    }
+    if (!machiningOptions) {
+        machiningOptions = defaultMachiningOptions;
+        localStorage.setItem('cnc_machining', JSON.stringify(machiningOptions));
     }
 
     let currentStep = 1;
@@ -968,6 +990,42 @@
         adminPanel.classList.remove('active');
     };
 
+    window.addCustomMachining = function() {
+        const nameEl = document.getElementById('machName');
+        const descEl = document.getElementById('machDesc');
+        const presetEl = document.getElementById('machPreset');
+
+        nameEl.classList.remove('error');
+        descEl.classList.remove('error');
+
+        let hasError = false;
+        if (!nameEl.value.trim()) { nameEl.classList.add('error'); hasError = true; }
+        if (!descEl.value.trim()) { descEl.classList.add('error'); hasError = true; }
+
+        if (hasError) return;
+
+        const id = 'custom_mach_' + Date.now();
+        // Dynamisches Zuweisen von Icons basierend auf der Auswahl
+        let icon = 'fa-gears';
+        if (presetEl.value === 'schlichten') icon = 'fa-sparkles';
+        if (presetEl.value === 'feinschlichten') icon = 'fa-gem';
+
+        machiningOptions.push({
+            id,
+            name: nameEl.value.trim(),
+            desc: descEl.value.trim(),
+            icon,
+            preset: presetEl.value
+        });
+
+        localStorage.setItem('cnc_machining', JSON.stringify(machiningOptions));
+        renderMachining();
+
+        nameEl.value = '';
+        descEl.value = '';
+        adminPanel.classList.remove('active');
+    };
+
     window.deleteMaterial = function(event, id) {
         event.stopPropagation();
         if (!confirm('Dieses Material permanent löschen?')) return;
@@ -995,6 +1053,20 @@
         }
         renderCategories();
         renderTools();
+    };
+
+    window.deleteMachining = function(event, id) {
+        event.stopPropagation();
+        if (!confirm('Diese Bearbeitungsart permanent löschen?')) return;
+
+        machiningOptions = machiningOptions.filter(m => m.id !== id);
+        localStorage.setItem('cnc_machining', JSON.stringify(machiningOptions));
+
+        if (selection.machining === id) {
+            selection.machining = null;
+            btnNext.disabled = true;
+        }
+        renderMachining();
     };
 
     function renderMaterials() {
@@ -1076,6 +1148,7 @@
                     <i class="fa-solid ${opt.icon}"></i>
                     <div class="check-badge"><i class="fa-solid fa-check"></i></div>
                 </div>
+                <button class="btn-delete-item" onclick="deleteMachining(event, '${opt.id}')">✕</button>
                 <div>
                     <div class="card-title">${opt.name}</div>
                     <div class="card-description">${opt.desc}</div>
@@ -1098,7 +1171,6 @@
         }
         btnNext.disabled = false;
 
-        // Auto-Forward: Springt nach 300 Millisekunden automatisch zum nächsten Schritt
         setTimeout(() => {
             if (currentStep < 5) {
                 currentStep++;
@@ -1107,7 +1179,6 @@
         }, 300);
     };
 
-    // Erlaubt das Zurückspringen zu Schritten über die Nummern-Leiste oben
     window.jumpToStep = function(stepToGo) {
         if (stepToGo === currentStep) return;
         
@@ -1168,6 +1239,7 @@
         selection = { material: null, category: null, tool: null, machining: null };
         renderMaterials();
         renderCategories();
+        renderMachining();
         updateWizard();
     }
 
@@ -1187,15 +1259,18 @@
         let apFactor = 1.5;
         let aeFactor = 0.7;
         
-        if (selection.machining === 'schruppen') {
+        // Nutzt das im Preset hinterlegte Profil der Bearbeitungsart
+        const currentPreset = selMachining.preset || 'schruppen';
+        
+        if (currentPreset === 'schruppen') {
             apFactor = 0.225; 
             aeFactor = 0.7;   
-        } else if (selection.machining === 'schlichten') {
+        } else if (currentPreset === 'schlichten') {
             vc = vc * 1.2;
             fz = fz * 0.6;
             apFactor = 1.0; 
             aeFactor = 0.1;
-        } else if (selection.machining === 'feinschlichten') {
+        } else if (currentPreset === 'feinschlichten') {
             vc = vc * 1.4;
             fz = fz * 0.4;
             apFactor = 0.5;
@@ -1205,7 +1280,7 @@
         const d = selTool.d;
         const z = selTool.z;
 
-        if (selection.material === 'stahl55' && selection.tool === 's8' && selection.machining === 'schruppen') {
+        if (selection.material === 'stahl55' && selection.tool === 's8' && currentPreset === 'schruppen') {
             vc = 90; fz = 0.06;
             let n = 3581; let vf = 645; let ap = 1.8; let ae = 5.6;
             renderOutputs(vc, n, vf, fz, ap, ae, Math.round(ap * ae * vf), z, d);
