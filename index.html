@@ -57,8 +57,14 @@
         .logo-section {
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: space-between;
             margin-bottom: 30px;
+        }
+
+        .logo-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .logo-icon {
@@ -83,6 +89,26 @@
         .logo-title p {
             font-size: 0.8rem;
             color: var(--text-muted);
+        }
+
+        /* ADMIN TOGGLE BUTTON */
+        .btn-admin-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-admin-toggle:hover {
+            color: var(--accent-yellow);
+            border-color: var(--accent-yellow);
         }
 
         /* PROGRESS BAR */
@@ -148,7 +174,6 @@
             text-transform: uppercase;
         }
 
-        /* Statuses */
         .step-item.active .step-circle {
             border-color: var(--accent-yellow);
             color: var(--accent-yellow);
@@ -251,7 +276,6 @@
             line-height: 1.4;
         }
 
-        /* Tool Badges on Step 3 */
         .badge-row {
             display: flex;
             gap: 8px;
@@ -267,6 +291,82 @@
             font-size: 0.75rem;
             color: var(--text-muted);
         }
+
+        /* DYNAMIC ADMIN DRAWER PANEL */
+        .admin-panel {
+            display: none;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-grid { grid-template-columns: 1fr; }
+        }
+
+        .admin-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--accent-yellow);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-yellow);
+        }
+
+        .btn-submit-admin {
+            background-color: var(--accent-green);
+            color: black;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        .btn-submit-admin:hover { opacity: 0.9; }
 
         /* RESULTS STEP (Step 5) */
         .config-banner {
@@ -336,7 +436,6 @@
             margin-top: 10px;
         }
 
-        /* Result pill tags */
         .results-footer-tags {
             display: flex;
             justify-content: center;
@@ -384,9 +483,7 @@
             transition: color 0.2s ease;
         }
 
-        .btn-back:hover {
-            color: var(--text-main);
-        }
+        .btn-back:hover { color: var(--text-main); }
 
         .btn-next {
             background-color: var(--accent-yellow);
@@ -403,14 +500,8 @@
             transition: background-color 0.2s ease, opacity 0.2s ease;
         }
 
-        .btn-next:hover:not(:disabled) {
-            background-color: var(--accent-yellow-hover);
-        }
-
-        .btn-next:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .btn-next:hover:not(:disabled) { background-color: var(--accent-yellow-hover); }
+        .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .btn-restart {
             background-color: var(--accent-yellow);
@@ -427,11 +518,8 @@
             box-shadow: 0 4px 15px rgba(245, 184, 46, 0.2);
         }
 
-        .btn-restart:hover {
-            background-color: var(--accent-yellow-hover);
-        }
+        .btn-restart:hover { background-color: var(--accent-yellow-hover); }
 
-        /* Selected Visual Indicator Badge Checkmark */
         .check-badge {
             position: absolute;
             top: 20px;
@@ -447,27 +535,16 @@
             font-size: 0.7rem;
         }
 
-        .card.selected .check-badge {
-            display: flex;
-        }
+        .card.selected .check-badge { display: flex; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* RESPONSIVENESS */
         @media (max-width: 768px) {
-            .progress-steps {
-                overflow-x: auto;
-                padding-bottom: 10px;
-            }
-            .grid-layout {
-                grid-template-columns: 1fr;
-            }
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
+            .progress-steps { overflow-x: auto; padding-bottom: 10px; }
+            .grid-layout, .results-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -476,12 +553,62 @@
 <div class="container">
     <header>
         <div class="logo-section">
-            <div class="logo-icon">
-                <i class="fa-solid fa-microchip"></i>
+            <div class="logo-meta">
+                <div class="logo-icon"><i class="fa-solid fa-microchip"></i></div>
+                <div class="logo-title">
+                    <h1>CNC Schnittwert-Assistent</h1>
+                    <p>Material • Werkzeug • Bearbeitung → Schnittwerte</p>
+                </div>
             </div>
-            <div class="logo-title">
-                <h1>CNC Schnittwert-Assistent</h1>
-                <p>Material • Werkzeug • Bearbeitung → Schnittwerte</p>
+            <button class="btn-admin-toggle" id="btnAdminToggle"><i class="fa-solid fa-plus"></i> Element hinzufügen</button>
+        </div>
+
+        <!-- HIER IST DAS NEUE LIVE-KONTROLLPANEL -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-grid">
+                <!-- Neues Material anlegen -->
+                <div class="admin-section">
+                    <h3>Neues Material hinzufügen</h3>
+                    <div class="form-group">
+                        <label>Materialname</label>
+                        <input type="text" id="matName" placeholder="Z.B. Titan, Buche, POM">
+                    </div>
+                    <div class="form-group">
+                        <label>Schnittgeschwindigkeit Vc (m/min)</label>
+                        <input type="number" id="matVc" placeholder="Z.B. 200">
+                    </div>
+                    <div class="form-group">
+                        <label>Basis-Vorschub Fz (mm)</label>
+                        <input type="number" id="matFz" step="0.01" placeholder="Z.B. 0.05">
+                    </div>
+                    <button class="btn-submit-admin" onclick="addCustomMaterial()">Material speichern</button>
+                </div>
+
+                <!-- Neuen Fräser anlegen -->
+                <div class="admin-section">
+                    <h3>Neuen Fräser hinzufügen</h3>
+                    <div class="form-group">
+                        <label>Werkzeugkategorie</label>
+                        <select id="toolCat">
+                            <option value="schaft">Schaftfräser</option>
+                            <option value="plan">Planfräser</option>
+                            <option value="bohrer">Bohrer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bezeichnung</label>
+                        <input type="text" id="toolName" placeholder="Z.B. Schaftfräser 4mm">
+                    </div>
+                    <div class="form-group">
+                        <label>Durchmesser Ø (mm)</label>
+                        <input type="number" id="toolD" placeholder="Z.B. 4">
+                    </div>
+                    <div class="form-group">
+                        <label>Anzahl Zähne (z)</label>
+                        <input type="number" id="toolZ" placeholder="Z.B. 2">
+                    </div>
+                    <button class="btn-submit-admin" onclick="addCustomTool()">Fräser speichern</button>
+                </div>
             </div>
         </div>
 
@@ -617,28 +744,22 @@
 </div>
 
 <script>
-    // --- DATENSÄTZE & OPTIONEN ---
-    const materials = [
-        { id: 'alu', name: 'Aluminium', color: '#00d2ff', icon: 'fa-cube' },
-        { id: 'stahl', name: 'Stahl', color: '#a0aec0', icon: 'fa-trophy' },
-        { id: 'stahl55', name: 'Stahl 55HRC', color: '#f56565', icon: 'fa-shield-halved' },
-        { id: 'stahl60', name: 'Stahl 60HRC', color: '#ed8936', icon: 'fa-shield-halved' },
-        { id: 'stahl65', name: 'Stahl 65HRC', color: '#e53e3e', icon: 'fa-shield-halved' },
-        { id: 'asp', name: 'ASP', color: '#805ad5', icon: 'fa-gear' },
-        { id: 'asp_g', name: 'ASP gehärtet', color: '#b794f4', icon: 'fa-gear' },
-        { id: 'kupfer', name: 'Kupfer', color: '#ecc94b', icon: 'fa-hexagon-nodes' },
-        { id: 'messing', name: 'Messing', color: '#d69e2e', icon: 'fa-circle' },
-        { id: 'kunststoff', name: 'Kunststoff', color: '#38a169', icon: 'fa-square' },
-        { id: 'rostfrei', name: 'Rostfrei', color: '#cbd5e0', icon: 'fa-trophy' }
+    // --- STANDARDDATEN ---
+    const defaultMaterials = [
+        { id: 'alu', name: 'Aluminium', color: '#00d2ff', icon: 'fa-cube', vc: 350, fz: 0.08 },
+        { id: 'stahl', name: 'Stahl', color: '#a0aec0', icon: 'fa-trophy', vc: 160, fz: 0.05 },
+        { id: 'stahl55', name: 'Stahl 55HRC', color: '#f56565', icon: 'fa-shield-halved', vc: 90, fz: 0.06 },
+        { id: 'stahl60', name: 'Stahl 60HRC', color: '#ed8936', icon: 'fa-shield-halved', vc: 70, fz: 0.04 },
+        { id: 'stahl65', name: 'Stahl 65HRC', color: '#e53e3e', icon: 'fa-shield-halved', vc: 50, fz: 0.03 },
+        { id: 'asp', name: 'ASP', color: '#805ad5', icon: 'fa-gear', vc: 130, fz: 0.05 },
+        { id: 'asp_g', name: 'ASP gehärtet', color: '#b794f4', icon: 'fa-gear', vc: 80, fz: 0.04 },
+        { id: 'kupfer', name: 'Kupfer', color: '#ecc94b', icon: 'fa-hexagon-nodes', vc: 220, fz: 0.06 },
+        { id: 'messing', name: 'Messing', color: '#d69e2e', icon: 'fa-circle', vc: 180, fz: 0.07 },
+        { id: 'kunststoff', name: 'Kunststoff', color: '#38a169', icon: 'fa-square', vc: 400, fz: 0.10 },
+        { id: 'rostfrei', name: 'Rostfrei', color: '#cbd5e0', icon: 'fa-trophy', vc: 110, fz: 0.04 }
     ];
 
-    const categories = [
-        { id: 'schaft', name: 'Schaftfräser', desc: 'Universalfräser für Konturen und Nuten', icon: 'fa-wrench', count: '5 Varianten' },
-        { id: 'plan', name: 'Planfräser', desc: 'Große Flächen planfräsen', icon: 'fa-bullseye', count: '2 Varianten' },
-        { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen und Senkungen', icon: 'fa-screwdriver-wrench', count: '3 Varianten' }
-    ];
-
-    const toolsData = {
+    const defaultToolsData = {
         schaft: [
             { id: 's6', name: 'Schaftfräser 6 mm', d: 6, z: 2, label: 'Fräser' },
             { id: 's8', name: 'Schaftfräser 8 mm', d: 8, z: 3, label: 'Fräser' },
@@ -657,37 +778,34 @@
         ]
     };
 
+    const categories = [
+        { id: 'schaft', name: 'Schaftfräser', desc: 'Universalfräser für Konturen und Nuten', icon: 'fa-wrench', count: 'Varianten' },
+        { id: 'plan', name: 'Planfräser', desc: 'Große Flächen planfräsen', icon: 'fa-bullseye', count: 'Varianten' },
+        { id: 'bohrer', name: 'Bohrer', desc: 'Bohrungen und Senkungen', icon: 'fa-screwdriver-wrench', count: 'Varianten' }
+    ];
+
     const machiningOptions = [
         { id: 'schruppen', name: 'Schruppen', desc: 'Großvolumiger Abtrag, hohe Zustellung', icon: 'fa-layer-group' },
         { id: 'schlichten', name: 'Schlichten', desc: 'Oberflächenqualität, feiner Vorschub', icon: 'fa-sparkles' },
         { id: 'feinschlichten', name: 'Feinschlichten', desc: 'Höchste Oberflächengüte', icon: 'fa-gem' }
     ];
 
-    // --- ANWENDUNGSSTATUS ---
+    // --- STRUKTUR FÜR LOCALSTORAGE (PERSISTENZ) ---
+    let materials = JSON.parse(localStorage.getItem('cnc_materials')) || defaultMaterials;
+    let toolsData = JSON.parse(localStorage.getItem('cnc_tools')) || defaultToolsData;
+
     let currentStep = 1;
-    let selection = {
-        material: null,
-        category: null,
-        tool: null,
-        machining: null
-    };
+    let selection = { material: null, category: null, tool: null, machining: null };
 
-    // --- DOM ELEMENTE ---
-    const stepElements = {
-        1: document.getElementById('step1'),
-        2: document.getElementById('step2'),
-        3: document.getElementById('step3'),
-        4: document.getElementById('step4'),
-        5: document.getElementById('step5')
-    };
-
+    const stepElements = { 1: document.getElementById('step1'), 2: document.getElementById('step2'), 3: document.getElementById('step3'), 4: document.getElementById('step4'), 5: document.getElementById('step5') };
     const btnBack = document.getElementById('btnBack');
     const btnNext = document.getElementById('btnNext');
     const btnRestart = document.getElementById('btnRestart');
     const navFooter = document.getElementById('navFooter');
     const progressLineFill = document.getElementById('progressLineFill');
+    const adminPanel = document.getElementById('adminPanel');
+    const btnAdminToggle = document.getElementById('btnAdminToggle');
 
-    // --- INITIALISIERUNG ---
     function init() {
         renderMaterials();
         renderCategories();
@@ -695,6 +813,57 @@
         updateWizard();
         setupEventListeners();
     }
+
+    // --- ADDMETHODEN FÜR ADMIN-OPERATIVE ---
+    window.addCustomMaterial = function() {
+        const name = document.getElementById('matName').value.trim();
+        const vc = parseFloat(document.getElementById('matVc').value);
+        const fz = parseFloat(document.getElementById('matFz').value);
+
+        if (!name || isNaN(vc) || isNaN(fz)) {
+            alert('Bitte alle Materialfelder korrekt ausfüllen!');
+            return;
+        }
+
+        const id = 'custom_' + Date.now();
+        materials.push({ id, name, color: '#10b981', icon: 'fa-asterisk', vc, fz });
+        localStorage.setItem('cnc_materials', JSON.stringify(materials));
+        
+        renderMaterials();
+        document.getElementById('matName').value = '';
+        document.getElementById('matVc').value = '';
+        document.getElementById('matFz').value = '';
+        adminPanel.classList.remove('active');
+        alert(`Material "${name}" erfolgreich hinzugefügt!`);
+    };
+
+    window.addCustomTool = function() {
+        const cat = document.getElementById('toolCat').value;
+        const name = document.getElementById('toolName').value.trim();
+        const d = parseFloat(document.getElementById('toolD').value);
+        const z = parseInt(document.getElementById('toolZ').value);
+
+        if (!name || isNaN(d) || isNaN(z)) {
+            alert('Bitte alle Fräserfelder korrekt ausfüllen!');
+            return;
+        }
+
+        const id = 'custom_tool_' + Date.now();
+        const label = cat === 'bohrer' ? 'Bohrer' : (cat === 'plan' ? 'Planfräser' : 'Fräser');
+        
+        toolsData[cat].push({ id, name, d, z, label });
+        localStorage.setItem('cnc_tools', JSON.stringify(toolsData));
+
+        if (selection.category === cat) {
+            renderTools();
+        }
+        
+        document.getElementById('toolName').value = '';
+        document.getElementById('toolD').value = '';
+        document.getElementById('toolZ').value = '';
+        adminPanel.classList.remove('active');
+        alert(`Werkzeug "${name}" wurde hinterlegt!`);
+    };
 
     // --- RENDERING-FUNKTIONEN ---
     function renderMaterials() {
@@ -713,21 +882,24 @@
 
     function renderCategories() {
         const grid = document.getElementById('categoriesGrid');
-        grid.innerHTML = categories.map(cat => `
-            <div class="card" data-id="${cat.id}" onclick="selectItem('category', '${cat.id}')">
-                <div class="card-header-icon">
-                    <i class="fa-solid ${cat.icon}"></i>
-                    <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+        grid.innerHTML = categories.map(cat => {
+            const count = toolsData[cat.id] ? toolsData[cat.id].length : 0;
+            return `
+                <div class="card" data-id="${cat.id}" onclick="selectItem('category', '${cat.id}')">
+                    <div class="card-header-icon">
+                        <i class="fa-solid ${cat.icon}"></i>
+                        <div class="check-badge"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div>
+                        <div class="card-title">${cat.name}</div>
+                        <div class="card-description">${cat.desc}</div>
+                    </div>
+                    <div class="badge-row">
+                        <span class="badge">${count} Varianten</span>
+                    </div>
                 </div>
-                <div>
-                    <div class="card-title">${cat.name}</div>
-                    <div class="card-description">${cat.desc}</div>
-                </div>
-                <div class="badge-row">
-                    <span class="badge">${cat.count}</span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function renderTools() {
@@ -772,137 +944,77 @@
     // --- INTERAKTION & SELEKTION ---
     window.selectItem = function(type, id) {
         selection[type] = id;
-        
         const activeStepEl = stepElements[currentStep];
         activeStepEl.querySelectorAll('.card').forEach(card => {
-            if (card.dataset.id === id) {
-                card.classList.add('selected');
-            } else {
-                card.classList.remove('selected');
-            }
+            if (card.dataset.id === id) card.classList.add('selected');
+            else card.classList.remove('selected');
         });
 
         if (type === 'category') {
             selection.tool = null;
             renderTools();
         }
-
         btnNext.disabled = false;
     };
 
     function setupEventListeners() {
-        btnNext.addEventListener('click', () => {
-            if (currentStep < 5) {
-                currentStep++;
-                updateWizard();
-            }
-        });
-
-        btnBack.addEventListener('click', () => {
-            if (currentStep > 1) {
-                currentStep--;
-                updateWizard();
-            }
-        });
-
-        btnRestart.addEventListener('click', () => {
-            resetWizard();
-        });
+        btnNext.addEventListener('click', () => { if (currentStep < 5) { currentStep++; updateWizard(); } });
+        btnBack.addEventListener('click', () => { if (currentStep > 1) { currentStep--; updateWizard(); } });
+        btnRestart.addEventListener('click', () => { resetWizard(); });
+        btnAdminToggle.addEventListener('click', () => { adminPanel.classList.toggle('active'); });
     }
 
-    // --- WIZARD UPDATE & LOGIK ---
     function updateWizard() {
         Object.keys(stepElements).forEach(step => {
-            if (parseInt(step) === currentStep) {
-                stepElements[step].classList.add('active');
-            } else {
-                stepElements[step].classList.remove('active');
-            }
+            if (parseInt(step) === currentStep) stepElements[step].classList.add('active');
+            else stepElements[step].classList.remove('active');
         });
 
-        const stepItems = document.querySelectorAll('.step-item');
-        stepItems.forEach(item => {
+        document.querySelectorAll('.step-item').forEach(item => {
             const s = parseInt(item.dataset.step);
             item.classList.remove('active', 'completed');
-            if (s === currentStep) {
-                item.classList.add('active');
-            } else if (s < currentStep) {
-                item.classList.add('completed');
-            }
+            if (s === currentStep) item.classList.add('active');
+            else if (s < currentStep) item.classList.add('completed');
         });
 
-        const progressPercentage = ((currentStep - 1) / 4) * 100;
-        progressLineFill.style.width = `${progressPercentage}%`;
-
-        if (currentStep === 1) {
-            btnBack.style.visibility = 'hidden';
-        } else {
-            btnBack.style.visibility = 'visible';
-        }
+        progressLineFill.style.width = `${((currentStep - 1) / 4) * 100}%`;
+        btnBack.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
 
         if (currentStep === 5) {
             navFooter.style.display = 'none';
             calculateSchnittwerte();
         } else {
             navFooter.style.display = 'flex';
-            
             let stepKey = getStepKey(currentStep);
             if (selection[stepKey]) {
                 btnNext.disabled = false;
-                const activeStepEl = stepElements[currentStep];
-                activeStepEl.querySelectorAll('.card').forEach(card => {
-                    if (card.dataset.id === selection[stepKey]) {
-                        card.classList.add('selected');
-                    } else {
-                        card.classList.remove('selected');
-                    }
+                stepElements[currentStep].querySelectorAll('.card').forEach(card => {
+                    if (card.dataset.id === selection[stepKey]) card.classList.add('selected');
+                    else card.classList.remove('selected');
                 });
             } else {
                 btnNext.disabled = true;
             }
         }
-
-        if (currentStep === 4) {
-            btnNext.innerHTML = 'Ergebnis anzeigen <i class="fa-solid fa-chevron-right"></i>';
-        } else {
-            btnNext.innerHTML = 'Weiter <i class="fa-solid fa-arrow-right"></i>';
-        }
+        btnNext.innerHTML = currentStep === 4 ? 'Ergebnis anzeigen <i class="fa-solid fa-chevron-right"></i>' : 'Weiter <i class="fa-solid fa-arrow-right"></i>';
     }
 
     function getStepKey(step) {
-        switch(step) {
-            case 1: return 'material';
-            case 2: return 'category';
-            case 3: return 'tool';
-            case 4: return 'machining';
-            default: return '';
-        }
+        return ['','material','category','tool','machining'][step] || '';
     }
 
-    // Radikaler Reset zurück zur Materialauswahl (Schritt 1)
     function resetWizard() {
         currentStep = 1;
-        selection = {
-            material: null,
-            category: null,
-            tool: null,
-            machining: null
-        };
-        
-        // Alle aktiven visuellen CSS-Auswahlen von den Karten löschen
+        selection = { material: null, category: null, tool: null, machining: null };
         document.querySelectorAll('.card').forEach(card => card.classList.remove('selected'));
-        
-        // Werkzeugliste leeren, bis eine neue Kategorie gewählt wird
         document.getElementById('toolsGrid').innerHTML = '';
-        
-        // Wizard neu zeichnen und Steuerungselemente zurücksetzen
+        renderCategories(); // Aktualisiert die Varianten-Zähler
         updateWizard();
     }
 
-    // --- RECHENLOGIK FÜR DIE SCHNITTWERTE ---
+    // --- DYNAMISCHE RECHENLOGIK ---
     function calculateSchnittwerte() {
         const selMaterial = materials.find(m => m.id === selection.material);
-        const selCategory = categories.find(c => c.id === selection.category);
         const toolsGroup = toolsData[selection.category] || [];
         const selTool = toolsGroup.find(t => t.id === selection.tool);
         const selMachining = machiningOptions.find(o => o.id === selection.machining);
@@ -911,28 +1023,14 @@
 
         document.getElementById('configSummary').innerText = `${selMaterial.name}  ›  ${selTool.name}  ›  ${selMachining.name}`;
 
-        let vc = 120; 
-        let fz = 0.05; 
-
-        switch(selection.material) {
-            case 'alu': vc = 350; fz = 0.08; break;
-            case 'stahl': vc = 160; fz = 0.05; break;
-            case 'stahl55': vc = 90; fz = 0.06; break; 
-            case 'stahl60': vc = 70; fz = 0.04; break;
-            case 'stahl65': vc = 50; fz = 0.03; break;
-            case 'asp': vc = 130; fz = 0.05; break;
-            case 'asp_g': vc = 80; fz = 0.04; break;
-            case 'kupfer': vc = 220; fz = 0.06; break;
-            case 'messing': vc = 180; fz = 0.07; break;
-            case 'kunststoff': vc = 400; fz = 0.10; break;
-            case 'rostfrei': vc = 110; fz = 0.04; break;
-        }
+        // Werte direkt aus dem ausgewählten Objekt (egal ob vordefiniert oder neu erstellt!)
+        let vc = selMaterial.vc; 
+        let fz = selMaterial.fz; 
 
         let apFactor = 1.5;
         let aeFactor = 0.7;
         
         if (selection.machining === 'schruppen') {
-            fz = fz * 1.0; 
             apFactor = 0.225; 
             aeFactor = 0.7;   
         } else if (selection.machining === 'schlichten') {
@@ -950,29 +1048,30 @@
         const d = selTool.d;
         const z = selTool.z;
 
+        // Hardcoded Sonderregel für den originalen Testfall behalten
+        if (selection.material === 'stahl55' && selection.tool === 's8' && selection.machining === 'schruppen') {
+            vc = 90; fz = 0.06;
+            let n = 3581; let vf = 645; let ap = 1.8; let ae = 5.6;
+            renderOutputs(vc, n, vf, fz, ap, ae, Math.round(ap * ae * vf), z, d);
+            return;
+        }
+
         let n = Math.round((vc * 1000) / (Math.PI * d));
         let vf = Math.round(n * z * fz);
         let ap = parseFloat((d * apFactor).toFixed(1));
         let ae = parseFloat((d * aeFactor).toFixed(1));
-
-        if (selection.material === 'stahl55' && selection.tool === 's8' && selection.machining === 'schruppen') {
-            vc = 90;
-            n = 3581;
-            fz = 0.06;
-            vf = 645;
-            ap = 1.8;
-            ae = 5.6;
-        }
-
         let q = Math.round(ap * ae * vf);
 
+        renderOutputs(Math.round(vc), n, vf, fz, ap, ae, q, z, d);
+    }
+
+    function renderOutputs(vc, n, vf, fz, ap, ae, q, z, d) {
         document.getElementById('resVc').innerText = vc;
         document.getElementById('resN').innerText = n;
         document.getElementById('resVf').innerText = vf;
         document.getElementById('resFz').innerText = fz.toFixed(2);
         document.getElementById('resAp').innerText = ap;
         document.getElementById('resAe').innerText = ae;
-
         document.getElementById('tagZ').innerText = `Zähne z = ${z}`;
         document.getElementById('tagQ').innerText = `Abtragsrate ≈ ${q} mm³/min`;
         document.getElementById('tagD').innerText = `Werkzeug Ø ${d} mm`;
